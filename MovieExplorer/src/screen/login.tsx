@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,26 +7,46 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from 'react-native';
-import { RFValue } from 'react-native-responsive-fontsize';
+import {RFValue} from 'react-native-responsive-fontsize';
+import {LoginRequest} from '../axiosRequest/axiosRequest';
 
-const { width, height } = Dimensions.get('screen');
+const {width, height} = Dimensions.get('screen');
 
-const login = () => {
+const login = ({navigation}:any) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  const accountValidation = async () => {
+    try {
+      const payload = {user: {email, password}};
+      const res = await LoginRequest(payload);
+      const {message} = res.data;
+
+      if (message === 'Logged in successfully') {
+        navigation.replace('Dashboard');
+      } else {
+        Alert.alert('Login Failed', message);
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      Alert.alert('Error', 'Unable to login. Please try again later.');
+    }
+  };
+
   return (
-    <ScrollView
-      style={styles.container}
-      keyboardShouldPersistTaps="handled"
-    >
+    <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
       {/* Header */}
       <View>
-        <Text style={[styles.primaryText, { fontSize: RFValue(36) }]}>
+        <Text style={[styles.primaryText, {fontSize: RFValue(36)}]}>
           Welcome back
         </Text>
-        <Text style={[styles.secondaryText, { fontSize: RFValue(16), marginTop: height * 0.01 }]}>
+        <Text
+          style={[
+            styles.secondaryText,
+            {fontSize: RFValue(16), marginTop: height * 0.01},
+          ]}>
           Signin to continue watching
         </Text>
       </View>
@@ -49,18 +69,18 @@ const login = () => {
           value={password}
           onChangeText={setPassword}
         />
-      </View>  
+      </View>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => {}}
-      >
+      <TouchableOpacity style={styles.button} onPress={accountValidation}>
         <Text style={styles.buttonLabel}>Sign in</Text>
       </TouchableOpacity>
-      
+
       {/* Footer */}
       <Text style={styles.footerText}>
-        Don't have an account? <Text style={styles.footerLink}>Sign Up</Text>
+        Don't have an account?
+        <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+          <Text style={styles.footerLink}>Sign Up</Text>
+        </TouchableOpacity>
       </Text>
     </ScrollView>
   );
@@ -82,8 +102,8 @@ const styles = StyleSheet.create({
   secondaryText: {
     color: '#9CA3AF',
   },
-  form:{
-    marginTop: height*0.03
+  form: {
+    marginTop: height * 0.03,
   },
   input: {
     backgroundColor: '#323539',

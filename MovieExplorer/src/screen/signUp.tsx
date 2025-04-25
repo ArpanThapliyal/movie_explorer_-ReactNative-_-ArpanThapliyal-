@@ -7,30 +7,50 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
+import { signUpRequest } from '../axiosRequest/axiosRequest';
 
 const { width, height } = Dimensions.get('screen');
 
-const SignUp = () => {
+const signUp = ({ navigation }: any) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [Cpassword, setCpassword] = useState('');
+
+  const accountCreation = async () => {
+    try {
+      const payload = {
+        user: {
+          name,
+          email,
+          password,
+          mobile_number: phone,
+        },
+      };
+
+      const res = await signUpRequest(payload);
+      const {message} = res.data
+      // Navigate to Login or Home on success
+      if (message === 'User signed up successfully') {
+        navigation.replace('Dashboard');
+      } else {
+        Alert.alert('Login Failed', message);
+      }
+    } catch (err) {
+      console.log('Sign-up error:', err);
+    }
+  };
 
   return (
-    <ScrollView
-      style={styles.container}
-      keyboardShouldPersistTaps="handled"
-    >
+    <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
       {/* Header */}
       <View>
-        <Text style={[styles.primaryText, { fontSize: RFValue(36) }]}>
-          Create Account
-        </Text>
-        <Text style={[styles.secondaryText, { fontSize: RFValue(16), marginTop: height * 0.01 }]}>
-          Join MovieExplorer+ today
-        </Text>
+        <Text style={[styles.primaryText, { fontSize: RFValue(36) }]}>Create Account</Text>
+        <Text style={[styles.secondaryText, { fontSize: RFValue(16), marginTop: height * 0.01 }]}>Join MovieExplorer+ today</Text>
       </View>
 
       {/* Form */}
@@ -46,6 +66,7 @@ const SignUp = () => {
           style={styles.input}
           placeholder="Phone no."
           placeholderTextColor="#9CA3AF"
+          keyboardType="phone-pad"
           value={phone}
           onChangeText={setPhone}
         />
@@ -65,25 +86,33 @@ const SignUp = () => {
           value={password}
           onChangeText={setPassword}
         />
-      </View>  
+        <TextInput
+          style={styles.input}
+          placeholder="Confirm Password"
+          placeholderTextColor="#9CA3AF"
+          secureTextEntry
+          value={Cpassword}
+          onChangeText={setCpassword}
+        />
+      </View>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => {}}
-      >
+      <TouchableOpacity style={styles.button} onPress={accountCreation}>
         <Text style={styles.buttonLabel}>Create Account</Text>
       </TouchableOpacity>
-      
 
       {/* Footer */}
       <Text style={styles.footerText}>
-        Already have an account? <Text style={styles.footerLink}>Sign In</Text>
+        Already have an account?{' '}
+        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+          <Text style={styles.footerLink}>Sign In</Text>
+        </TouchableOpacity>
       </Text>
     </ScrollView>
   );
 };
 
-export default SignUp;
+
+export default signUp;
 
 const styles = StyleSheet.create({
   container: {
