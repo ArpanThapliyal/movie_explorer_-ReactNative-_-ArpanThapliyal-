@@ -1,37 +1,25 @@
 import React from 'react';
-import { Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Header from '../components/dashboardHeader';
-import Body from '../components/dashboardBody';
-import Footer from '../components/dashboardFooter';
+import { Dimensions, ScrollView, StyleSheet, View } from 'react-native';
+import Header from '../components/dashboard/dashboardHeader';
+import Body   from '../components/dashboard/dashboardBody';
 
-const { width, height } = Dimensions.get('screen');
-const dashboard = () => {
+const { height } = Dimensions.get('screen');
+
+export default function Dashboard() {
   return (
-      <View style={styles.container}>
-      <ScrollView  keyboardShouldPersistTaps="handled">
-        <Header/>
-        <Body/>
+    <View style={styles.container}>
+      <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <Header />
+        <Body />
       </ScrollView>
-        <View style={styles.foot}>
-          <Footer/>
-        </View>
-      </View>
-  )
+    </View>
+  );
 }
-
-export default dashboard;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'black',
-    paddingHorizontal: width * 0.04,
     paddingTop: height * 0.03,
   },
-  foot:{
-    paddingHorizontal: width * 0.04,
-    position:'absolute',
-    marginTop:"195%",
-    width:'109%'
-  }
-})
+});

@@ -14,12 +14,12 @@ import { signUpRequest } from '../axiosRequest/axiosRequest';
 
 const { width, height } = Dimensions.get('screen');
 
-const signUp = ({ navigation }: any) => {
+const SignUp = ({ navigation }: any) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [Cpassword, setCpassword] = useState('');
+  const [password_confirmation, setPassword_confirmation] = useState('');
 
   const accountCreation = async () => {
     try {
@@ -28,20 +28,24 @@ const signUp = ({ navigation }: any) => {
           name,
           email,
           password,
+          password_confirmation,
           mobile_number: phone,
         },
       };
 
       const res = await signUpRequest(payload);
-      const {message} = res.data
-      // Navigate to Login or Home on success
-      if (message === 'User signed up successfully') {
-        navigation.replace('Dashboard');
-      } else {
-        Alert.alert('Login Failed', message);
+      const {id} = res.data
+      // Navigate dashboard
+      if (id >= 0) {
+        navigation.replace('MainTabs');
+      }else {
+        Alert.alert('Signup failed');
       }
-    } catch (err) {
+    } catch (err:any) {
       console.log('Sign-up error:', err);
+      // error while signing up
+      const errors = err.response?.data?.errors;
+      Alert.alert('Sign-up failed',`* ${errors.join('\n\n *'+" ")}` );
     }
   };
 
@@ -50,7 +54,7 @@ const signUp = ({ navigation }: any) => {
       {/* Header */}
       <View>
         <Text style={[styles.primaryText, { fontSize: RFValue(36) }]}>Create Account</Text>
-        <Text style={[styles.secondaryText, { fontSize: RFValue(16), marginTop: height * 0.01 }]}>Join MovieExplorer+ today</Text>
+        <Text style={[styles.secondaryText, { fontSize: RFValue(16), marginTop: height * 0.01 }]}>Join MovieExplorer today</Text>
       </View>
 
       {/* Form */}
@@ -91,8 +95,8 @@ const signUp = ({ navigation }: any) => {
           placeholder="Confirm Password"
           placeholderTextColor="#9CA3AF"
           secureTextEntry
-          value={Cpassword}
-          onChangeText={setCpassword}
+          value={password_confirmation}
+          onChangeText={setPassword_confirmation}
         />
       </View>
 
@@ -101,18 +105,20 @@ const signUp = ({ navigation }: any) => {
       </TouchableOpacity>
 
       {/* Footer */}
+      <View style={{flexDirection:'row',justifyContent: 'center',marginTop: height * 0.03,}}>
       <Text style={styles.footerText}>
         Already have an account?{' '}
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.footerLink}>Sign In</Text>
-        </TouchableOpacity>
       </Text>
+      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+        <Text style={[styles.footerLink]}> Sign In</Text>
+      </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 };
 
 
-export default signUp;
+export default SignUp;
 
 const styles = StyleSheet.create({
   container: {
@@ -156,12 +162,11 @@ const styles = StyleSheet.create({
   },
   footerText: {
     color: '#9CA3AF',
-    textAlign: 'center',
-    fontSize: RFValue(14),
-    marginTop: height * 0.02,
+    fontSize: RFValue(14), 
   },
   footerLink: {
     color: '#FBBF24',
     fontWeight: 'bold',
+    fontSize: RFValue(14),
   },
 });

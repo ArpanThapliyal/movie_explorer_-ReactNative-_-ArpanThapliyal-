@@ -14,7 +14,7 @@ import {LoginRequest} from '../axiosRequest/axiosRequest';
 
 const {width, height} = Dimensions.get('screen');
 
-const login = ({navigation}:any) => {
+const Login = ({navigation}:any) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -22,16 +22,17 @@ const login = ({navigation}:any) => {
     try {
       const payload = {user: {email, password}};
       const res = await LoginRequest(payload);
-      const {message} = res.data;
+      const {id} = res.data;
 
-      if (message === 'Logged in successfully') {
-        navigation.replace('Dashboard');
-      } else {
-        Alert.alert('Login Failed', message);
+      if (id >= 0) {
+        navigation.replace('MainTabs');
+      }else {
+        Alert.alert('Sign-in failed');
       }
-    } catch (err) {
+    } catch (err:any) {
       console.error('Login error:', err);
-      Alert.alert('Error', 'Unable to login. Please try again later.');
+      const data = err.response?.data;
+      Alert.alert('Sign-in failed',data.error );
     }
   };
 
@@ -47,7 +48,7 @@ const login = ({navigation}:any) => {
             styles.secondaryText,
             {fontSize: RFValue(16), marginTop: height * 0.01},
           ]}>
-          Signin to continue watching
+          SignIn to continue watching
         </Text>
       </View>
 
@@ -76,17 +77,19 @@ const login = ({navigation}:any) => {
       </TouchableOpacity>
 
       {/* Footer */}
-      <Text style={styles.footerText}>
-        Don't have an account?
+      <View style={{flexDirection:'row',justifyContent: 'center',marginTop: height * 0.03,}}>
+        <Text style={styles.footerText}>
+          Don't have an account?
+        </Text>
         <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-          <Text style={styles.footerLink}>Sign Up</Text>
+          <Text style={styles.footerLink}> Sign Up</Text>
         </TouchableOpacity>
-      </Text>
+      </View>  
     </ScrollView>
   );
 };
 
-export default login;
+export default Login;
 
 const styles = StyleSheet.create({
   container: {
@@ -130,9 +133,7 @@ const styles = StyleSheet.create({
   },
   footerText: {
     color: '#9CA3AF',
-    textAlign: 'center',
     fontSize: RFValue(14),
-    marginTop: height * 0.02,
   },
   footerLink: {
     color: '#FBBF24',

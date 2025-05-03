@@ -1,3 +1,9 @@
+project.ext.react = [
+  entryFile: "index.js",
+  enableHermes: project.hasProperty("hermesEnabled") ? project.property("hermesEnabled").toBoolean() : false
+]
+
+
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"

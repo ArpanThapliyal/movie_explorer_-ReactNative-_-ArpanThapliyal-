@@ -1,8 +1,9 @@
 import axios from 'axios';
 
+//sign-up api
 export const signUpRequest = async (data) => {
   return axios.post(
-    'https://movie-explorer-app.onrender.com/api/v1/auth/sign_up',
+    'https://movie-explorer-app.onrender.com/users',
     data,
     {
       headers: {
@@ -11,9 +12,11 @@ export const signUpRequest = async (data) => {
     }
   );
 };
+
+//sign-in api
 export const LoginRequest = async (data) => {
   return axios.post(
-    'https://movie-explorer-app.onrender.com/api/v1/auth/sign_in',
+    'https://movie-explorer-app.onrender.com/users/sign_in',
     data,
     {
       headers: {
@@ -22,3 +25,15 @@ export const LoginRequest = async (data) => {
     }
   );
 };
+
+//all movies api
+export const GetAllMovies = async () =>{
+  try{
+    const res = await axios.get('https://movie-explorer-app.onrender.com/api/v1/movies')
+    return res.data.movies;
+  }catch(err){
+    console.log("some error occured",err);
+    return null;
+  }
+};
+

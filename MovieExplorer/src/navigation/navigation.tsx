@@ -1,24 +1,24 @@
+// src/navigation/AppNavigator.tsx
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import signUp from '../screen/signUp';
-import login from '../screen/login';
-import dashboard from '../screen/dashboard';
+import Login   from '../screen/Login';
+import SignUp  from '../screen/SignUp';
+import Tabs    from './TabNavigation';   
 
 const Stack = createNativeStackNavigator();
-const navigation = () => {
+
+export default function AppNavigator() {
   return (
     <NavigationContainer>
-        <Stack.Navigator
-        initialRouteName='Dashboard'
-        screenOptions={{headerShown : false}}
-        >
-            <Stack.Screen name ="SignUp" component={signUp}/>
-            <Stack.Screen name ="Login" component={login}/>
-            <Stack.Screen name ="Dashboard" component={dashboard}/>
-        </Stack.Navigator>
+      <Stack.Navigator
+        screenOptions={{ headerShown: false }}
+        initialRouteName="MainTabs"
+      >
+        <Stack.Screen name="Login"   component={Login} />
+        <Stack.Screen name="SignUp"  component={SignUp} />
+        <Stack.Screen name="MainTabs" component={Tabs} />
+      </Stack.Navigator>
     </NavigationContainer>
-  )
+  );
 }
-
-export default navigation;
