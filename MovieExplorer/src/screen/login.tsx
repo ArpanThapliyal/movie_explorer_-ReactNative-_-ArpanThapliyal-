@@ -11,18 +11,26 @@ import {
 } from 'react-native';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {LoginRequest} from '../axiosRequest/axiosRequest';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../redux/slice/UserSlice';
 
 const {width, height} = Dimensions.get('screen');
 
 const Login = ({navigation}:any) => {
-  const [email, setEmail] = useState('');
+  const [UserEmail, setUserEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  //redux
+  const dispatch = useDispatch();
 
   const accountValidation = async () => {
     try {
-      const payload = {user: {email, password}};
+      const payload = {user: {email:UserEmail, password}};
       const res = await LoginRequest(payload);
-      const {id} = res.data;
+      const {id,role,email} = res.data
+
+      //storing user detail in store
+      dispatch(setUser({role,email}));
 
       if (id >= 0) {
         navigation.replace('MainTabs');
@@ -59,8 +67,8 @@ const Login = ({navigation}:any) => {
           placeholder="Email"
           placeholderTextColor="#9CA3AF"
           keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
+          value={UserEmail}
+          onChangeText={setUserEmail}
         />
         <TextInput
           style={styles.input}

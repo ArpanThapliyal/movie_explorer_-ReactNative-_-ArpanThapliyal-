@@ -37,3 +37,15 @@ export const GetAllMovies = async () =>{
   }
 };
 
+
+//get single movie api
+export const GetMovieById = async (id) =>{
+  try{
+    const res = await axios.get(`https://movie-explorer-app.onrender.com/api/v1/movies/${id}`)
+    return res.data;
+  }catch(err){
+    console.log("some error occured",err);
+    return null;
+  }
+};
+

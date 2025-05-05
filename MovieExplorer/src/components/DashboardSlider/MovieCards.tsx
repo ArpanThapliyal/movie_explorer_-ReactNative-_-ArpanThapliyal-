@@ -1,18 +1,23 @@
 import React, { useMemo } from 'react';
-import { Dimensions, FlatList, Image, StyleSheet, View } from 'react-native';
+import { Dimensions, FlatList, Image, Pressable, StyleSheet, TouchableHighlight, View } from 'react-native';
+import { useDispatch } from 'react-redux';
+import { setId } from '../../redux/slice/MovieSlice';
+import { useNavigation } from '@react-navigation/native';
 
 const { height, width } = Dimensions.get('screen');
 
 const MovieCards = ({ movies, condition }: any) => {
+
   // verticalDirection determined from `condition`
   const verticalDirection = condition !== 'year' && condition !== 'rating';
 
-  const genereWiseMovies = () =>{
+  //genre wise filtering
+  const genreWiseMovies = () =>{
     if(condition =='All'){
       return movies;
     }
     else{
-      return movies.filter(m => m.genre == condition);
+      return movies.filter(m => m.genre.includes(condition));
     }
   }
 
@@ -23,16 +28,25 @@ const MovieCards = ({ movies, condition }: any) => {
       case 'rating':
         return movies.filter(m => m.rating >= 8.0);
       default:
-        return genereWiseMovies();
+        return genreWiseMovies();
     }
   }, [movies, condition]);
+
+
+  const navigation = useNavigation();
+  const dispatch = useDispatch();
 
   return (
     <FlatList
       data={filtered}
       renderItem={({ item }) => (
         <View style={styles.container}>
-          <Image source={{ uri: item.poster_url }} style={styles.img} />
+          <TouchableHighlight onPress={()=>{
+            dispatch(setId(item.id));
+            navigation.navigate('MovieDetail');
+          }}>
+            <Image source={{ uri: item.poster_url }} style={styles.img} />
+          </TouchableHighlight>
         </View>
       )}
       keyExtractor={item => item.id.toString()}

@@ -11,22 +11,26 @@ import {
 } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { signUpRequest } from '../axiosRequest/axiosRequest';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../redux/slice/UserSlice';
 
 const { width, height } = Dimensions.get('screen');
 
 const SignUp = ({ navigation }: any) => {
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [userEmail, setUserEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [password_confirmation, setPassword_confirmation] = useState('');
+
+  const dispatch = useDispatch();
 
   const accountCreation = async () => {
     try {
       const payload = {
         user: {
           name,
-          email,
+          email:userEmail,
           password,
           password_confirmation,
           mobile_number: phone,
@@ -34,7 +38,9 @@ const SignUp = ({ navigation }: any) => {
       };
 
       const res = await signUpRequest(payload);
-      const {id} = res.data
+      const {id,role,email} = res.data
+
+      dispatch(setUser({role,email}));
       // Navigate dashboard
       if (id >= 0) {
         navigation.replace('MainTabs');
@@ -79,8 +85,8 @@ const SignUp = ({ navigation }: any) => {
           placeholder="Email"
           placeholderTextColor="#9CA3AF"
           keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
+          value={userEmail}
+          onChangeText={setUserEmail}
         />
         <TextInput
           style={styles.input}

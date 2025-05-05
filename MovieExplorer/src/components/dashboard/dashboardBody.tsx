@@ -4,12 +4,12 @@ import Slider from '../DashboardSlider/Slider';
 import { ImageSlider } from '../../data/SliderData';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { GetAllMovies } from '../../axiosRequest/axiosRequest';
-import Genere from '../DashboardBody/Genre';
+import Genre from '../DashboardBody/Genre';
 import MovieCards from '../DashboardSlider/MovieCards';
 import { useSelector } from 'react-redux';
 
 const { width, height } = Dimensions.get('screen');
-const dashboardBody = () => {
+const DashboardBody = () => {
   const [movies,setMovies] = useState([]);
 
 // getting all movies
@@ -28,7 +28,7 @@ const dashboardBody = () => {
   return (
     <View style={styles.container}>
     {/* genere header */}
-      <Genere movies = {movies}/>
+      <Genre movies = {movies}/>
       
     
     {/* all movies */}
@@ -68,7 +68,7 @@ const dashboardBody = () => {
   )
 }
 
-export default dashboardBody;
+export default DashboardBody;
 
 const styles = StyleSheet.create({
   container: {
