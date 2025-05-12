@@ -28,10 +28,14 @@ const {width} = Dimensions.get('screen');
 export default function MovieDetailScreen() {
   const [singleMovie, setSingleMovie] = useState({});
   const movieId = useSelector(state => state.movie.id);
+  const user_token = useSelector(state => state.user.token)
 
   useEffect(() => {
     if (!movieId) return;
-    GetMovieById(movieId).then(data => setSingleMovie(data || {}));
+
+    GetMovieById(movieId,user_token)
+    .then(data => setSingleMovie(data || {}));
+
   }, [movieId]);
 
   const navigation = useNavigation();
@@ -169,10 +173,10 @@ const styles = StyleSheet.create({
   },
   fadeGradient: {
     position: 'absolute',
-    top: -50, // Extend above the content area to create fade effect
+    top: -50, 
     left: 0,
     right: 0,
-    height: 50, // Height of the gradient fade
+    height: 50, 
   },
   contentArea: {
     flex: 1,

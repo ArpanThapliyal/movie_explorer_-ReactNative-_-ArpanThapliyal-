@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Dimensions,
   StyleSheet,
   View,
-  ViewToken,
+  ActivityIndicator,
 } from 'react-native';
 import { ImageSliderType } from '../../data/SliderData';
 import SliderItem from './SliderItem';
@@ -13,65 +13,99 @@ import Animated, {
   useAnimatedScrollHandler,
   useDerivedValue,
   useSharedValue,
+  runOnUI,
 } from 'react-native-reanimated';
 import Pagination from './Pagination';
+import { GetAllMovies } from '../../axiosRequest/axiosRequest';
 
-type Props = {
-  itemList: ImageSliderType[];
-};
 const { width } = Dimensions.get('screen');
 
-const Slider = ({ itemList }: Props) => {
+type Props = {
+  page?: number;
+};
+
+const Slider = ({ page = 1 }: Props) => {
   const scrollX = useSharedValue(0);
   const offset = useSharedValue(0);
   const [paginationIndex, setPaginationIndex] = useState(0);
-  const [data, setData] = useState(itemList);
+  const [data, setData] = useState<ImageSliderType[]>([]);
+  const [origData, setOrigData] = useState<ImageSliderType[]>([]);
+  const [loading, setLoading] = useState(true);
   const ref = useAnimatedRef<Animated.FlatList<ImageSliderType>>();
   const isAutoPlay = useRef(true);
   const interval = useRef<NodeJS.Timeout>();
+
+  // Fetch dynamic banners
+  useEffect(() => {
+    const fetchBanners = async () => {
+      setLoading(true);
+      const movies = await GetAllMovies(page, 10);
+      if (movies) {
+        const topFive = movies.slice(0, 5).map((m: any): ImageSliderType => ({
+          image: { uri: m.banner_url },
+        }));
+        setOrigData(topFive);
+        // triple for seamless loop
+        setData([...topFive, ...topFive, ...topFive]);
+      }
+      setLoading(false);
+    };
+    fetchBanners();
+  }, [page]);
+
+  // initial scroll to middle copy
+  useEffect(() => {
+    if (!loading && origData.length && data.length) {
+      const startOffset = origData.length * width;
+      offset.value = startOffset;
+      // scroll on UI thread
+      runOnUI(() => scrollTo(ref, startOffset, 0, false))();
+    }
+  }, [loading, origData.length, data.length]);
+
+  // Autoplay
+  useEffect(() => {
+    if (data.length && isAutoPlay.current) {
+      interval.current = setInterval(() => {
+        offset.value = offset.value + width;
+      }, 5000);
+    }
+    return () => clearInterval(interval.current!);
+  }, [data.length]);
+
+  // Scroll to offset with animation
+  useDerivedValue(() => {
+    if (data.length) scrollTo(ref, offset.value, 0, true);
+  }, [offset, ref, data.length]);
 
   const onScrollHandler = useAnimatedScrollHandler({
     onScroll: e => {
       scrollX.value = e.contentOffset.x;
     },
-    onMomentumEnd: e => {
-      offset.value = e.contentOffset.x;
-    },
   });
 
-  const onViewableItemsChanged = useCallback(
-    ({
-      viewableItems,
-    }: {
-      viewableItems: ViewToken[];
-      changed: ViewToken[];
-    }) => {
-      if (viewableItems.length > 0 && viewableItems[0].index != null) {
-        setPaginationIndex(viewableItems[0].index % itemList.length);
-      }
-    },
-    [itemList.length]
-  );
-
-  const viewabilityConfig = { itemVisiblePercentThreshold: 50 };
-  const viewabilityConfigCallbackPairs = useRef([
-    { viewabilityConfig, onViewableItemsChanged },
-  ]);
-
-  useEffect(() => {
-    if (isAutoPlay.current) {
-      interval.current = setInterval(() => {
-        offset.value += width;
-      }, 5000);
-    } else {
-      clearInterval(interval.current);
+  const handleMomentumEnd = (e: any) => {
+    let idx = Math.round(e.nativeEvent.contentOffset.x / width);
+    const count = origData.length;
+    // if at either end, reset to middle copy
+    if (idx < count) {
+      idx = idx + count;
+      runOnUI(() => scrollTo(ref, idx * width, 0, false))();
+    } else if (idx >= count * 2) {
+      idx = idx - count;
+      runOnUI(() => scrollTo(ref, idx * width, 0, false))();
     }
-    return () => clearInterval(interval.current);
-  }, [offset, width]);
+    setPaginationIndex(idx % count);
+    offset.value = idx * width;
+  };
 
-  useDerivedValue(() => {
-    scrollTo(ref, offset.value, 0, true);
-  }, [offset, ref]);
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color="skyblue" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -81,25 +115,18 @@ const Slider = ({ itemList }: Props) => {
         renderItem={({ item, index }) => (
           <SliderItem item={item} index={index} scrollX={scrollX} />
         )}
-        keyExtractor={(_, i) => String(i)}
+        keyExtractor={(_, i) => i.toString()}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onScroll={onScrollHandler}
         scrollEventThrottle={16}
-        viewabilityConfigCallbackPairs={viewabilityConfigCallbackPairs.current}
-        onEndReached={() => setData(d => [...d, ...itemList])}
-        onEndReachedThreshold={0.5}
-        onScrollBeginDrag={() => {
-          isAutoPlay.current = false;
-        }}
-        onScrollEndDrag={() => {
-          isAutoPlay.current = true;
-        }}
+        onMomentumScrollEnd={handleMomentumEnd}
+        onScrollBeginDrag={() => (isAutoPlay.current = false)}
+        onScrollEndDrag={() => (isAutoPlay.current = true)}
       />
-
       <Pagination
-        items={itemList}
+        items={origData}
         scrollX={scrollX}
         paginationIndex={paginationIndex}
       />
@@ -112,5 +139,10 @@ export default Slider;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    height: width * 0.6,
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

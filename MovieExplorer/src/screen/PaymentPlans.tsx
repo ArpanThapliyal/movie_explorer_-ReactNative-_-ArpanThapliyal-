@@ -61,9 +61,12 @@ export default function PaymentPlans({ navigation }: any) {
         <TouchableOpacity
           style={styles.button}
           activeOpacity={0.5}
-          onPress={() => {
-            /* handle payment */
-          }}
+          onPress={() =>
+            navigation.navigate('Payment', {
+              amount: 0,     // 0 paise
+              currency: 'inr',
+            })
+          }
         >
           <Text style={styles.buttonText}>Continue</Text>
         </TouchableOpacity>
@@ -89,9 +92,12 @@ export default function PaymentPlans({ navigation }: any) {
         <TouchableOpacity
           style={styles.button}
           activeOpacity={0.5}
-          onPress={() => {
-            /* handle payment */
-          }}
+          onPress={() =>
+            navigation.navigate('Payment', {
+              amount: 19900,     // ₹199.00 → 19900 paise
+              currency: 'inr',
+            })
+          }
         >
           <Text style={styles.buttonText}>Continue</Text>
         </TouchableOpacity>
@@ -117,9 +123,12 @@ export default function PaymentPlans({ navigation }: any) {
         <TouchableOpacity
           style={styles.button}
           activeOpacity={0.5}
-          onPress={() => {
-            /* handle payment */
-          }}
+          onPress={() =>
+            navigation.navigate('Payment', {
+              amount: 89900,     // ₹899.00 → 89900 paise
+              currency: 'inr',
+            })
+          }
         >
           <Text style={styles.buttonText}>Continue</Text>
         </TouchableOpacity>

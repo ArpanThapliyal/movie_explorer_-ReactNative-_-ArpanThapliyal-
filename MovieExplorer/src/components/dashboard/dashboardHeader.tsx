@@ -28,7 +28,7 @@ const Header = () => {
     (async () => {
       try {
         const res = await addDeviceNotification(fcmToken, userToken);
-        console.log('Device registered for notifications:', res.data);
+        console.log('Device registered for notifications:', res);
       } catch (err) {
         console.error('Failed to register device:', err);
       }

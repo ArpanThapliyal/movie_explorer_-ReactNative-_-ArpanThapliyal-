@@ -14,6 +14,7 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearUser } from '../redux/slice/UserSlice';
+import { LogoutRequest } from '../axiosRequest/axiosRequest';
 
 const { width } = Dimensions.get('window');
 const AVATAR_SIZE = 120;
@@ -28,6 +29,12 @@ export default function Profile() {
   
   // Check if user is a supervisor
   const isSupervisor = details.role === 'supervisor';
+
+  // handle sin-out
+   const handelSignOut = async() => {
+    const res = await LogoutRequest(details.token);
+    console.log(res.data);
+   }
   
   return (
     <SafeAreaView style={styles.container}>
@@ -76,9 +83,9 @@ export default function Profile() {
           <View style={styles.card}>
             <Text style={styles.name}>Arpan</Text>
             <View style={styles.roleContainer}>
-              <Text style={styles.role}>{details.role || 'Premium Member'}</Text>
+              <Text style={styles.role}>{details.role || 'user'}</Text>
             </View>
-            <Text style={styles.email}>{details.email || 'arpan@cinema.com'}</Text>
+            <Text style={styles.email}>{details.email || 'dummy@gmail.com'}</Text>
             
             {/* Premium badge - only show if user is Premium but not Supervisor */}
             {!isSupervisor && details.role === 'Premium Member' && (
@@ -156,6 +163,7 @@ export default function Profile() {
             <TouchableOpacity 
               style={styles.logoutButton}   
               onPress={() => {
+                handelSignOut();
                 dispatch(clearUser());
                 navigation.replace('Login');
               }}

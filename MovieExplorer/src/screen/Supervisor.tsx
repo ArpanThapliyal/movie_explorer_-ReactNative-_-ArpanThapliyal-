@@ -1,5 +1,4 @@
-// AddMovie.js
-import React, {useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -14,15 +13,18 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import {Picker} from '@react-native-picker/picker';
-import {useNavigation} from '@react-navigation/native';
-import {launchImageLibrary} from 'react-native-image-picker';
-import {AddMovieRequest} from '../axiosRequest/axiosRequest';
-import {useSelector} from 'react-redux';
+import { Picker } from '@react-native-picker/picker';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { AddMovieRequest, GetMovieById, UpdateMovieRequest } from '../axiosRequest/axiosRequest';
+import { useSelector } from 'react-redux';
 
-const AddMovie = () => {
+const Supervisor = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+  const { movieId, isEditing } = route.params || {};
   const token = useSelector(state => state.user.token);
+
   const [loading, setLoading] = useState(false);
   const [movieData, setMovieData] = useState({
     title: '',
@@ -36,21 +38,55 @@ const AddMovie = () => {
   });
   const [poster, setPoster] = useState(null);
   const [banner, setBanner] = useState(null);
+  const [existingPosterUrl, setExistingPosterUrl] = useState(null);
+  const [existingBannerUrl, setExistingBannerUrl] = useState(null);
+
+  useEffect(() => {
+    if (isEditing && movieId && token) {
+      const fetchMovieData = async () => {
+        setLoading(true);
+        try {
+          const data = await GetMovieById(movieId, token);
+          if (data) {
+            setMovieData({
+              title: data.title || '',
+              genre: data.genre || '',
+              release_year: String(data.release_year) || '',
+              rating: String(data.rating) || '',
+              director: data.director || '',
+              duration: String(data.duration) || '',
+              description: data.description || '',
+              premium: data.premium || false,
+            });
+            setExistingPosterUrl(data.poster_url || null);
+            setExistingBannerUrl(data.banner_url || null);
+          } else {
+            Alert.alert('Error', 'Failed to fetch movie data');
+          }
+        } catch (err) {
+          Alert.alert('Error', 'Failed to fetch movie data');
+          console.error('Fetch movie error:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchMovieData();
+    }
+  }, [isEditing, movieId, token]);
 
   const handleInputChange = (field, value) => {
-    setMovieData({...movieData, [field]: value});
+    setMovieData({ ...movieData, [field]: value });
   };
 
-  const pickImage = async type => {
-    const result = await launchImageLibrary({mediaType: 'photo'});
+  const pickImage = async (type) => {
+    const result = await launchImageLibrary({ mediaType: 'photo' });
     if (result.assets?.length) {
       const asset = result.assets[0];
       type === 'poster' ? setPoster(asset) : setBanner(asset);
     }
   };
 
-  const handleAddMovie = async () => {
-    // 1. Validate
+  const handleSubmit = async () => {
     const required = [
       'title',
       'genre',
@@ -61,12 +97,10 @@ const AddMovie = () => {
       'description',
     ];
     const missing = required.filter(f => !movieData[f]);
-    if (missing.length || !poster || !banner) {
+    if (missing.length || (!isEditing && (!poster || !banner))) {
       Alert.alert(
         'Missing fields',
-        [...missing, !poster && 'poster', !banner && 'banner']
-          .filter(Boolean)
-          .join(', '),
+        [...missing, !poster && 'poster', !banner && 'banner'].filter(Boolean).join(', '),
       );
       return;
     }
@@ -78,7 +112,6 @@ const AddMovie = () => {
 
     setLoading(true);
     try {
-      // 2. Build FormData with movie[...] keys
       const form = new FormData();
       form.append('movie[title]', movieData.title);
       form.append('movie[genre]', movieData.genre);
@@ -89,26 +122,35 @@ const AddMovie = () => {
       form.append('movie[description]', movieData.description);
       form.append('movie[premium]', String(movieData.premium));
 
-      form.append('movie[poster]', {
-        uri: poster.uri,
-        type: poster.type || 'image/jpeg',
-        name: poster.fileName || 'poster.jpg',
-      });
-      form.append('movie[banner]', {
-        uri: banner.uri,
-        type: banner.type || 'image/jpeg',
-        name: banner.fileName || 'banner.jpg',
-      });
+      if (poster) {
+        form.append('movie[poster]', {
+          uri: poster.uri,
+          type: poster.type || 'image/jpeg',
+          name: poster.fileName || 'poster.jpg',
+        });
+      }
+      if (banner) {
+        form.append('movie[banner]', {
+          uri: banner.uri,
+          type: banner.type || 'image/jpeg',
+          name: banner.fileName || 'banner.jpg',
+        });
+      }
 
-      // 3. Send to backend
-      await AddMovieRequest(form, token);
-
-      Alert.alert('Success', 'Movie added', [
-        {text: 'OK', onPress: () => navigation.goBack()},
-      ]);
+      if (isEditing) {
+        await UpdateMovieRequest(movieId, form, token);
+        Alert.alert('Success', 'Movie updated successfully', [
+          { text: 'OK', onPress: () => navigation.goBack() },
+        ]);
+      } else {
+        await AddMovieRequest(form, token);
+        Alert.alert('Success', 'Movie added successfully', [
+          { text: 'OK', onPress: () => navigation.goBack() },
+        ]);
+      }
     } catch (err) {
-      console.error('AddMovie error:', err.response?.data || err);
-      Alert.alert('Error', 'Failed to add movie');
+      console.error('Submit error:', err.response?.data || err);
+      Alert.alert('Error', isEditing ? 'Failed to update movie' : 'Failed to add movie');
     } finally {
       setLoading(false);
     }
@@ -120,7 +162,7 @@ const AddMovie = () => {
       style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0A0A1A" />
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Add New Movie</Text>
+        <Text style={styles.headerTitle}>{isEditing ? 'Edit Movie' : 'Add New Movie'}</Text>
       </View>
       <ScrollView style={styles.form}>
         {Object.entries({
@@ -170,11 +212,14 @@ const AddMovie = () => {
             style={styles.imagePicker}
             onPress={() => pickImage('poster')}>
             <Text style={styles.imagePickerText}>
-              {poster?.fileName || 'Choose Poster'}
+              {poster ? poster.fileName : 'Choose Poster'}
             </Text>
           </TouchableOpacity>
-          {poster && (
-            <Image source={{uri: poster.uri}} style={styles.preview} />
+          {(poster || (isEditing && existingPosterUrl)) && (
+            <Image
+              source={{ uri: poster ? poster.uri : existingPosterUrl }}
+              style={styles.preview}
+            />
           )}
         </View>
 
@@ -184,22 +229,25 @@ const AddMovie = () => {
             style={styles.imagePicker}
             onPress={() => pickImage('banner')}>
             <Text style={styles.imagePickerText}>
-              {banner?.fileName || 'Choose Banner'}
+              {banner ? banner.fileName : 'Choose Banner'}
             </Text>
           </TouchableOpacity>
-          {banner && (
-            <Image source={{uri: banner.uri}} style={styles.preview} />
+          {(banner || (isEditing && existingBannerUrl)) && (
+            <Image
+              source={{ uri: banner ? banner.uri : existingBannerUrl }}
+              style={styles.preview}
+            />
           )}
         </View>
 
         <TouchableOpacity
           style={styles.submit}
-          onPress={handleAddMovie}
+          onPress={handleSubmit}
           disabled={loading}>
           {loading ? (
             <ActivityIndicator color="#000" />
           ) : (
-            <Text style={styles.submitText}>Add Movie</Text>
+            <Text style={styles.submitText}>{isEditing ? 'Update Movie' : 'Add Movie'}</Text>
           )}
         </TouchableOpacity>
       </ScrollView>
@@ -208,7 +256,7 @@ const AddMovie = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#0A0A1A'},
+  container: { flex: 1, backgroundColor: '#0A0A1A' },
   header: {
     paddingTop: Platform.OS === 'ios' ? 50 : 20,
     paddingBottom: 20,
@@ -217,10 +265,10 @@ const styles = StyleSheet.create({
     borderBottomColor: '#FFDD00',
     alignItems: 'center',
   },
-  headerTitle: {fontSize: 24, fontWeight: 'bold', color: '#FFDD00'},
-  form: {padding: 16},
-  group: {marginBottom: 16},
-  label: {color: '#FFF', fontSize: 16, marginBottom: 8, fontWeight: '600'},
+  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#FFDD00' },
+  form: { padding: 16 },
+  group: { marginBottom: 16 },
+  label: { color: '#FFF', fontSize: 16, marginBottom: 8, fontWeight: '600' },
   input: {
     backgroundColor: '#1C1C3E',
     borderRadius: 8,
@@ -230,7 +278,7 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 16,
   },
-  textArea: {height: 100, textAlignVertical: 'top'},
+  textArea: { height: 100, textAlignVertical: 'top' },
   pickerContainer: {
     backgroundColor: '#1C1C3E',
     borderRadius: 8,
@@ -244,8 +292,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-  imagePickerText: {color: '#000', fontWeight: 'bold'},
-  preview: {width: '100%', height: 200, borderRadius: 8, marginTop: 8},
+  imagePickerText: { color: '#000', fontWeight: 'bold' },
+  preview: { width: '100%', height: 200, borderRadius: 8, marginTop: 8 },
   submit: {
     backgroundColor: '#FFDD00',
     borderRadius: 10,
@@ -254,7 +302,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 40,
   },
-  submitText: {fontSize: 18, fontWeight: 'bold', color: '#000'},
+  submitText: { fontSize: 18, fontWeight: 'bold', color: '#000' },
 });
 
-export default AddMovie;
+export default Supervisor;

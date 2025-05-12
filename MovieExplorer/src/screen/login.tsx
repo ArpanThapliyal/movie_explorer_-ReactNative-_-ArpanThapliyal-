@@ -27,7 +27,7 @@ const Login = ({navigation}:any) => {
     try {
       const payload = {user: {email:UserEmail, password}};
       const res = await LoginRequest(payload);
-      const {id,role,email,token} = res.data
+      const {id,role,email,token} = res.data; 
 
       //storing user detail in store
       dispatch(setUser({role,email,token}));

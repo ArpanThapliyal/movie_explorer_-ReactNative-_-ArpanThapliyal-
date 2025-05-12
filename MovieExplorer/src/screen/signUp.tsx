@@ -38,9 +38,9 @@ const SignUp = ({ navigation }: any) => {
       };
 
       const res = await signUpRequest(payload);
-      const {id,role,email} = res.data
+      const {id,role,email,token} = res.data
 
-      dispatch(setUser({role,email}));
+      dispatch(setUser({role,email,token}));
       // Navigate dashboard
       if (id >= 0) {
         navigation.replace('MainTabs');

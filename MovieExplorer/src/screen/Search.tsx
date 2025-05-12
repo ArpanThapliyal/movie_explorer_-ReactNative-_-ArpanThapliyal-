@@ -14,10 +14,10 @@ import {
 import debounce from 'lodash.debounce';
 import { GetAllMovies } from '../axiosRequest/axiosRequest';
 import { useNavigation } from '@react-navigation/native';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { setId } from '../redux/slice/MovieSlice';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const SearchScreen = () => {
   const [query, setQuery] = useState('');
@@ -28,6 +28,10 @@ const SearchScreen = () => {
   
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  
+  // Get user role from Redux store
+  const userRole = useSelector(state => state.user.role);
+  const isSupervisor = userRole === 'supervisor';
 
   // fetching all movies
   const fetchMovies = async () => {
@@ -78,18 +82,42 @@ const SearchScreen = () => {
     navigation.navigate('MovieDetail');
   };
 
+  // Function to handle edit click
+  const handleEditClick = (movieId) => {
+    dispatch(setId(movieId));
+    navigation.navigate('EditMovie');
+  };
+
   const renderItem = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.card} 
-      activeOpacity={0.8}
-      onPress={() => handleMoviePress(item.id)}
-    >
-      <Image source={{ uri: item.poster_url }} style={styles.poster} />
-      <View style={styles.info}>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.subtitle}>{`${item.release_year} • ${item.genre}`}</Text>
-      </View>
-    </TouchableOpacity>
+    <View style={styles.cardWrapper}>
+      <TouchableOpacity 
+        style={styles.card} 
+        activeOpacity={0.8}
+        onPress={() => handleMoviePress(item.id)}
+      >
+        <Image source={{ uri: item.poster_url }} style={styles.poster} />
+        <View style={styles.info}>
+          <Text style={styles.title}>{item.title}</Text>
+          <Text style={styles.subtitle}>{`${item.release_year} • ${item.genre}`}</Text>
+        </View>
+      </TouchableOpacity>
+      
+      {/* Edit Icon - Only visible for supervisors */}
+      {isSupervisor && (
+        <TouchableOpacity
+          style={styles.editIconContainer}
+          onPress={() => handleEditClick(item.id)}
+        >
+          <View style={styles.editIconCircle}>
+            <Image
+              source={require('../assets/search/pencil.png')}
+              style={styles.editIconImage}
+              resizeMode="contain"
+            />
+          </View>
+        </TouchableOpacity>
+      )}
+    </View>
   );
 
   const renderEmptyComponent = () => {
@@ -203,11 +231,14 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     flexGrow: 1,
   },
+  cardWrapper: {
+    position: 'relative',
+    marginBottom: 12,
+  },
   card: {
     flexDirection: 'row',
     backgroundColor: '#1F1F1F',
     borderRadius: 12,
-    marginBottom: 12,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOpacity: 0.4,
@@ -249,5 +280,26 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     tintColor: '#555',
+  },
+  editIconContainer: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 1,
+  },
+  editIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  editIconImage: {
+    width: 20,
+    height: 20,
+    tintColor: '#FFF',
   },
 });

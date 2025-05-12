@@ -7,7 +7,7 @@ const deviceTokenSlice = createSlice({
     },
     reducers: {
       setDeviceToken: (state, action) => {
-        state.token = action.payload.device_token;
+        state.device_token = action.payload;
       },
     }
   });
