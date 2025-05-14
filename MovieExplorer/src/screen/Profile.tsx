@@ -1,4 +1,3 @@
-import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import {
   View,
@@ -11,6 +10,8 @@ import {
   ScrollView,
   StatusBar
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearUser } from '../redux/slice/UserSlice';
@@ -30,11 +31,21 @@ export default function Profile() {
   // Check if user is a supervisor
   const isSupervisor = details.role === 'supervisor';
 
-  // handle sin-out
-   const handelSignOut = async() => {
-    const res = await LogoutRequest(details.token);
-    console.log(res.data);
-   }
+  // handle sign-out
+  const handleSignOut = async () => {
+    try {
+      // Optional API logout call
+      await LogoutRequest(details.token);
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+    // Remove stored data
+    await AsyncStorage.multiRemove(['userToken', 'userRole']);
+    // Clear Redux
+    dispatch(clearUser());
+    // Navigate to login
+    navigation.replace('Login');
+  };
   
   return (
     <SafeAreaView style={styles.container}>
@@ -162,11 +173,7 @@ export default function Profile() {
             
             <TouchableOpacity 
               style={styles.logoutButton}   
-              onPress={() => {
-                handelSignOut();
-                dispatch(clearUser());
-                navigation.replace('Login');
-              }}
+              onPress={ handleSignOut }
             >
               <Text style={styles.logoutText}>Logout</Text>
             </TouchableOpacity>

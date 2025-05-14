@@ -5,7 +5,6 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
-import { ImageSliderType } from '../../data/SliderData';
 import SliderItem from './SliderItem';
 import Animated, {
   scrollTo,
@@ -28,10 +27,10 @@ const Slider = ({ page = 1 }: Props) => {
   const scrollX = useSharedValue(0);
   const offset = useSharedValue(0);
   const [paginationIndex, setPaginationIndex] = useState(0);
-  const [data, setData] = useState<ImageSliderType[]>([]);
-  const [origData, setOrigData] = useState<ImageSliderType[]>([]);
+  const [data, setData] = useState([]);
+  const [origData, setOrigData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const ref = useAnimatedRef<Animated.FlatList<ImageSliderType>>();
+  const ref = useAnimatedRef<Animated.FlatList>();
   const isAutoPlay = useRef(true);
   const interval = useRef<NodeJS.Timeout>();
 
@@ -41,7 +40,7 @@ const Slider = ({ page = 1 }: Props) => {
       setLoading(true);
       const movies = await GetAllMovies(page, 10);
       if (movies) {
-        const topFive = movies.slice(0, 5).map((m: any): ImageSliderType => ({
+        const topFive = movies.slice(0, 5).map((m: any) => ({
           image: { uri: m.banner_url },
         }));
         setOrigData(topFive);

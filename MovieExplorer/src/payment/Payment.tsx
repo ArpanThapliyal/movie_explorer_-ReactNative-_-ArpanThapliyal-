@@ -1,53 +1,82 @@
-// payment.tsx
+import { StyleSheet, SafeAreaView, Alert } from 'react-native';
 import React, { useState } from 'react';
-import { View, Button, Alert } from 'react-native';
-import {
-  initPaymentSheet,
-  presentPaymentSheet,
-} from '@stripe/stripe-react-native';
+import WebView from 'react-native-webview';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { checkSubscriptionStatus } from '../axiosRequest/axiosRequest';
+import { useSelector } from 'react-redux';
 
-export default function CheckoutScreen({ route }) {
-  const { amount, currency } = route.params; // e.g. 19900, 'inr'
-  const [loading, setLoading] = useState(false);
+type PaymentRouteParams = {
+  params: {
+    url: string;
+    session: string;
+  };
+};
 
-  const handlePay = async () => {
-    setLoading(true);
-    try {
-      // 1. Fetch client secret for this plan
-      const resp = await fetch('http://192.168.225.33:3000/payment-sheet', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount, currency }),
-      });
-      const { clientSecret, error: fetchError } = await resp.json();
-      if (fetchError) throw new Error(fetchError);
+const Payment = () => {
+  const route = useRoute<RouteProp<PaymentRouteParams, 'params'>>();
+  const { url, session } = route.params;
+  const navigation = useNavigation();
+  const user_token = useSelector((state: any) => state.user.token);
 
-      // 2. Initialize the PaymentSheet
-      const { error: initError } = await initPaymentSheet({
-        merchantDisplayName: 'MovieApp',
-        paymentIntentClientSecret: clientSecret,
-      });
-      if (initError) throw initError;
+  const [hasProcessed, setHasProcessed] = useState(false);
 
-      // 3. Present the sheet
-      const { error: presentError } = await presentPaymentSheet();
-      if (presentError) throw presentError;
+  const handleNavigationChange = async(navState:any) => {
+    const currentUrl = navState.url;
+    console.log('Current URL:', currentUrl);
 
-      Alert.alert('Success', 'Your payment is confirmed!');
-    } catch (err) {
-      Alert.alert('Error', err.message);
-    } finally {
-      setLoading(false);
+    // Prevent multiple processing
+    if (hasProcessed) return;
+
+    // Handle success URL
+    if(currentUrl.includes('success')) {
+      console.log('Success URL reached:', currentUrl);
+      setHasProcessed(true);
+      
+      try {
+        const res = await checkSubscriptionStatus(user_token);
+        console.log(`Your plan type:`, res);
+        
+        if (res?.status === 200) {
+          console.log('Subscription status fetched successfully');
+          navigation.replace('MainTabs');
+        } else {
+          console.error('Failed to fetch subscription status:', res);
+          Alert.alert(
+            "Subscription Error",
+            "Your payment was successful, but we couldn't verify your subscription."
+          );
+        }
+      } catch (error) {
+        console.error('Error checking subscription status:', error);
+        Alert.alert(
+          "Subscription Error",
+          "Your payment was successful, but there was an error updating your subscription."
+        );
+      }
+    }
+    // Handle cancel or failure URL
+    else if(currentUrl.includes('cancel') || currentUrl.includes('failure')) {
+      console.log("Payment canceled or failed");
+      setHasProcessed(true);
+      Alert.alert(
+        "Payment Unsuccessful",
+        "Your payment was not completed."
+      );
     }
   };
 
   return (
-    <View style={{ marginTop: 100, padding: 20 }}>
-      <Button
-        title={loading ? 'Processing…' : 'Pay Now'}
-        onPress={handlePay}
-        disabled={loading}
+    <SafeAreaView style={{ flex: 1 }} testID="payment-screen">
+      <WebView
+        source={{ uri: url }}
+        startInLoadingState={true}
+        javaScriptEnabled={true}
+        onNavigationStateChange={handleNavigationChange}
       />
-    </View>
+    </SafeAreaView>
   );
-}
+};
+
+export default Payment;
+
+const styles = StyleSheet.create({});

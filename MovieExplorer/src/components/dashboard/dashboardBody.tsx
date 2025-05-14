@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Dimensions } from 'react-native';
 import Slider from '../DashboardSlider/Slider';
-import { ImageSlider } from '../../data/SliderData';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { checkSubscriptionStatus, GetAllMovies } from '../../axiosRequest/axiosRequest';
 import Genre from '../DashboardBody/Genre';
@@ -77,7 +76,7 @@ const DashboardBody = () => {
       <Text style={[styles.primaryText, { fontSize: RFValue(21) }]}>
         Popular Movies
       </Text>
-      <Slider itemList={ImageSlider}/>
+      <Slider />
       
       {singleGenre === 'All' ? (
         <>

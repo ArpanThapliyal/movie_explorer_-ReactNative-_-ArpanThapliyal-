@@ -7,7 +7,6 @@ import { setDeviceToken } from './src/redux/slice/DeviceTokenSlice';
 
 import messaging from '@react-native-firebase/messaging';
 import notifee from '@notifee/react-native';
-import { StripeProvider } from '@stripe/stripe-react-native';
 
 
 const InnerApp = () => {
@@ -87,11 +86,9 @@ const InnerApp = () => {
 };
 
 const App = () => (
-   <StripeProvider publishableKey='pk_test_51RMRzyPwqpF64eXXgkKdEh3El1tvDwKZUkJ5nrY0OiyFLrB8d33SS5lvvdyARh3b8PK7ewoQM8il60ND4L3XsoFT00tsY2JKkW'>
      <Provider store={myStore}>
        <InnerApp />
      </Provider>
-   </StripeProvider>
 );
 
 const styles = StyleSheet.create({

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   SafeAreaView,
   View,
@@ -10,6 +10,8 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize'; 
+import { useSelector } from 'react-redux';
+import { checkSubscriptionStatus, createSubscription } from '../axiosRequest/axiosRequest';
 
 const { height,width } = Dimensions.get('window');
 
@@ -35,6 +37,32 @@ export default function PaymentPlans({ navigation }: any) {
     'Faster Browsing',
   ];
 
+  const user_token = useSelector(state=>state.user.token);
+
+  // handling payment for subscription
+  const handlePayment = async (planType:string)=>{
+    const res = await createSubscription(planType,user_token);
+    console.log(res);
+
+    const checkOutUrl = res.url;
+    const session = res.session_id;
+
+    navigation.navigate('Payment',{url:checkOutUrl,session:session});
+  }
+
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      try {
+        const res = await checkSubscriptionStatus(user_token);
+        console.log("your payment type:", res.data);
+      } catch (err) {
+        console.error("subscription check failed:", err);
+      }
+    };
+  
+    fetchSubscription();
+  }, [user_token]);
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header image */}
@@ -45,7 +73,7 @@ export default function PaymentPlans({ navigation }: any) {
       <View style={styles.card}>
         <Text style={styles.price}>₹0</Text>
         <Text style={styles.subtitle}>Free</Text>
-        <Text style={styles.tagline}>Enjoy For A Month</Text>
+        <Text style={styles.tagline}>1_day</Text>
 
         {/* Features */}
         <View style={styles.features}>
@@ -61,12 +89,8 @@ export default function PaymentPlans({ navigation }: any) {
         <TouchableOpacity
           style={styles.button}
           activeOpacity={0.5}
-          onPress={() =>
-            navigation.navigate('Payment', {
-              amount: 0,     // 0 paise
-              currency: 'inr',
-            })
-          }
+          onPress={()=>{handlePayment("1_day")}}
+          
         >
           <Text style={styles.buttonText}>Continue</Text>
         </TouchableOpacity>
@@ -76,7 +100,7 @@ export default function PaymentPlans({ navigation }: any) {
       <View style={styles.card}>
         <Text style={styles.price}>₹199.00</Text>
         <Text style={styles.subtitle}>Monthly Access</Text>
-        <Text style={styles.tagline}>Free Perks Only /-</Text>
+        <Text style={styles.tagline}>Free Perks For a Month Only /-</Text>
 
         {/* Features */}
         <View style={styles.features}>
@@ -92,12 +116,7 @@ export default function PaymentPlans({ navigation }: any) {
         <TouchableOpacity
           style={styles.button}
           activeOpacity={0.5}
-          onPress={() =>
-            navigation.navigate('Payment', {
-              amount: 19900,     // ₹199.00 → 19900 paise
-              currency: 'inr',
-            })
-          }
+          onPress={()=>{handlePayment("1_month")}}
         >
           <Text style={styles.buttonText}>Continue</Text>
         </TouchableOpacity>
@@ -106,8 +125,8 @@ export default function PaymentPlans({ navigation }: any) {
       {/* Price card 3*/}
       <View style={styles.card}>
         <Text style={styles.price}>₹899.00</Text>
-        <Text style={styles.subtitle}>Yearly Access</Text>
-        <Text style={styles.tagline}>Pay Once, Enjoy For A Year</Text>
+        <Text style={styles.subtitle}>3 month Access</Text>
+        <Text style={styles.tagline}>Pay Once, Enjoy For 3 months</Text>
 
         {/* Features */}
         <View style={styles.features}>
@@ -123,12 +142,7 @@ export default function PaymentPlans({ navigation }: any) {
         <TouchableOpacity
           style={styles.button}
           activeOpacity={0.5}
-          onPress={() =>
-            navigation.navigate('Payment', {
-              amount: 89900,     // ₹899.00 → 89900 paise
-              currency: 'inr',
-            })
-          }
+          onPress={()=>{handlePayment("3_months")}}
         >
           <Text style={styles.buttonText}>Continue</Text>
         </TouchableOpacity>

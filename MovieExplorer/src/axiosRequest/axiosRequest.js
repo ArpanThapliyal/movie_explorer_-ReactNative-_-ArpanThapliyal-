@@ -193,12 +193,55 @@ export const checkSubscriptionStatus = async(user_token)=>{
       }
     }
     );
-    return res.data;
+    return res;
     
   } catch (error) {
     console.log("some error occured",err);
     return null;
   };
 }
+
+//create subscription
+
+export const createSubscription = async (planType,token) => {
+  try {
+    if (!token) {
+      throw new Error('No authentication token provided');
+    }
+
+    const response = await axios.post(
+      "https://movie-explorer-app.onrender.com/api/v1/subscriptions",
+      {plan_type: planType,
+        platform:"mobile"
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    console.log('API Response:', response.data);
+
+    if (response.data.error) {
+      throw new Error(response.data.error);
+    }
+
+    const checkoutUrl =
+      response.data.checkoutUrl ||
+      response.data.data?.checkoutUrl ||
+      response.data.url;
+
+    if (!checkoutUrl) {
+      throw new Error('No checkout URL returned from server.');
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error('Error creating subscription:', error);
+    throw new Error(error.message || 'Failed to initiate subscription');
+  }
+};
 
 

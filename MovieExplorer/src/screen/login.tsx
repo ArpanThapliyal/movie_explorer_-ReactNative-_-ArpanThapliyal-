@@ -9,6 +9,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {LoginRequest} from '../axiosRequest/axiosRequest';
 import { useDispatch } from 'react-redux';
@@ -28,6 +29,11 @@ const Login = ({navigation}:any) => {
       const payload = {user: {email:UserEmail, password}};
       const res = await LoginRequest(payload);
       const {id,role,email,token} = res.data; 
+
+      // Store token in AsyncStorage
+      await AsyncStorage.setItem('userToken', token);
+      // Optionally store full user object
+      await AsyncStorage.setItem('userRole', role);
 
       //storing user detail in store
       dispatch(setUser({role,email,token}));

@@ -9,6 +9,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { signUpRequest } from '../axiosRequest/axiosRequest';
 import { useDispatch } from 'react-redux';
@@ -40,6 +41,12 @@ const SignUp = ({ navigation }: any) => {
       const res = await signUpRequest(payload);
       const {id,role,email,token} = res.data
 
+      // Store token in AsyncStorage
+      await AsyncStorage.setItem('userToken', token);
+      // Optionally store full user object
+      await AsyncStorage.setItem('userRole', role);
+
+      //redux user
       dispatch(setUser({role,email,token}));
       // Navigate dashboard
       if (id >= 0) {

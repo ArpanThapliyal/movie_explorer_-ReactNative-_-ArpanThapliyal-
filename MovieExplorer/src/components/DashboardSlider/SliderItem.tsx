@@ -1,6 +1,5 @@
 import React from 'react';
 import {Dimensions, Image, StyleSheet, Text, View} from 'react-native';
-import {ImageSliderType} from '../../data/SliderData';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -9,7 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 type props = {
-  item: ImageSliderType;
+  item:any,
   index: number;
   scrollX: SharedValue<number>;
 };

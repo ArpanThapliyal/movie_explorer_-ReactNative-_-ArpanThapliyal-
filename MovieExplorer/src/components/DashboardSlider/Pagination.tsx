@@ -1,10 +1,10 @@
 import { StyleSheet, Text, View, Dimensions } from 'react-native'
 import React from 'react'
 import Animated, { Extrapolation, interpolate, SharedValue, useAnimatedStyle } from 'react-native-reanimated';
-import { ImageSliderType } from '../../data/SliderData';
+
 
 type props ={
-    items: ImageSliderType[];
+    items:any,
     paginationIndex: number;
     scrollX:SharedValue<number>
 }
