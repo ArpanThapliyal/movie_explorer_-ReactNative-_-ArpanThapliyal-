@@ -24,8 +24,11 @@ const DashboardBody = () => {
   useEffect(() => {
     async function fetchSubscription() {
       const res = await checkSubscriptionStatus(user_token);
-      if (res && res.plan_type) {
-        dispatch(setSubscription({ plan_type: res.plan_type }));
+      // console.log(res.data.subscription.plan_type);
+      const {plan_type,updated_at,expires_at} = res?.data.subscription;
+
+      if (res && res.data.subscription.plan_type) {
+        dispatch(setSubscription({ plan_type,updated_at,expires_at }));
       } else {
         dispatch(clearSubscription());
       }
@@ -81,7 +84,7 @@ const DashboardBody = () => {
       {singleGenre === 'All' ? (
         <>
           <Text style={[styles.primaryText, { fontSize: RFValue(20) }]}>
-            Continue Watching..
+            Recently Released..
           </Text>
           <MovieCards 
             movies={movies} 
@@ -90,7 +93,7 @@ const DashboardBody = () => {
             isLoading={isLoading}
           />
           <Text style={[styles.primaryText, { fontSize: RFValue(20) }]}>
-            Most Watched
+            Top Rated
           </Text>
           <MovieCards 
             movies={movies} 

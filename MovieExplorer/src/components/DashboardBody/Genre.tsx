@@ -27,7 +27,7 @@ const Genre = ({movies}:any) => {
           <TouchableOpacity
             key={item}
             onPress={()=>{
-              setSelectedText(item);  // here, item is unique single genre
+              setSelectedText(item);  // here item is unique single genre
               dispatch(setSelectedGenre(item),);
             }}
           >
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
         
       },
       selectedColorText:{
-        color: '#ff66b3',
+        color: '#007BFF',
         fontWeight: 'bold',
         fontSize:RFValue(17),
         paddingHorizontal: width * 0.022,

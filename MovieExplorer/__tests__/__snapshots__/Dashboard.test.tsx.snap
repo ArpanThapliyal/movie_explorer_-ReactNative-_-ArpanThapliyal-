@@ -1,0 +1,20 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Dashboard screen matches snapshot structure 1`] = `
+<View
+  style={
+    {
+      "backgroundColor": "black",
+      "flex": 1,
+      "paddingTop": 40.019999999999996,
+    }
+  }
+>
+  <RCTScrollView
+    keyboardShouldPersistTaps="handled"
+    showsVerticalScrollIndicator={false}
+  >
+    <View />
+  </RCTScrollView>
+</View>
+`;

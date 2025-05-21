@@ -101,7 +101,7 @@ const Slider = ({ page = 1 }: Props) => {
   if (loading) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color="skyblue" />
+        <ActivityIndicator size="large" color="#007BFF" />
       </View>
     );
   }

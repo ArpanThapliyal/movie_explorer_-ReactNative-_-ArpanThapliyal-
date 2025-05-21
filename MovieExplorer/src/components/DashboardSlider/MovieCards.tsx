@@ -8,7 +8,8 @@ import {
   View, 
   TouchableOpacity, 
   ActivityIndicator,
-  Text
+  Text,
+  Alert
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { setId } from '../../redux/slice/MovieSlice';
@@ -20,6 +21,7 @@ const { height, width } = Dimensions.get('screen');
 const MovieCards = ({ movies, condition, onEndReached, isLoading }) => {
   const userRole = useSelector(state => state.user.role);
   const user_token = useSelector(state => state.user.token);
+  const plan_type = useSelector(state => state.subscription.plan_type);
 
   const isSupervisor = userRole === 'supervisor';
   const verticalDirection = condition !== 'year' && condition !== 'rating';
@@ -49,9 +51,15 @@ const MovieCards = ({ movies, condition, onEndReached, isLoading }) => {
     navigation.navigate('Supervisor', { movieId, isEditing: true });
   };
 
-  const handleDeleteClick = (movieId) => {
-    DeleteMovieRequest(movieId, user_token);
-    console.log(`Delete movie with ID: ${movieId}`);
+  const handleDeleteClick = async (movieId) => {
+    try {
+      await DeleteMovieRequest(movieId, user_token);
+      console.log(`Deleted movie with ID: ${movieId}`);
+      navigation.replace('MainTabs');
+    } catch (error) {
+      console.error('Failed to delete movie:', error);
+      Alert.alert('Error', 'Failed to delete movie');
+    }
   };
 
   const handleEndReached = () => {
@@ -62,7 +70,7 @@ const MovieCards = ({ movies, condition, onEndReached, isLoading }) => {
     if (!isLoading) return null;
     return (
       <View style={styles.loaderContainer}>
-        <ActivityIndicator size="small" color="#FFFFFF" />
+        <ActivityIndicator size="small" color="#007BFF" />
       </View>
     );
   };
@@ -79,15 +87,27 @@ const MovieCards = ({ movies, condition, onEndReached, isLoading }) => {
             )}
             <TouchableHighlight
               onPress={() => {
-                dispatch(setId(item.id));
-                navigation.navigate('MovieDetail');
+                if (!item.premium ||isSupervisor || plan_type === 'premium') {
+                  dispatch(setId(item.id));
+                  navigation.navigate('MovieDetail');
+                } else {
+                  Alert.alert(
+                    "Please buy a subscription ",
+                    "to Access this Premium Movie",
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      { text: 'OK',onPress: () => navigation.navigate('Plans') }
+                    ],
+                    { cancelable: false }
+                  );
+                }
               }}
             >
               <Image
                 source={{ uri: item.poster_url }}
                 style={[
                   styles.img,
-                  { borderColor: item.premium ? 'gold' : 'white' }
+                  { borderColor: item.premium ? 'gold' : 'grey' }
                 ]}
               />
             </TouchableHighlight>
@@ -101,7 +121,17 @@ const MovieCards = ({ movies, condition, onEndReached, isLoading }) => {
                     />
                   </View>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDeleteClick(item.id)}>
+                <TouchableOpacity onPress={() => 
+                    Alert.alert(
+                      "Permanently Delete",
+                      "Are you sure you want to delete this movie?",
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'OK', onPress: () => handleDeleteClick(item.id) } // Use onPress
+                      ],
+                      { cancelable: false }
+                    )
+                  }>
                   <View style={styles.iconCircle}>
                     <Image
                       source={require('../../assets/movieCards/trashcan.png')}
@@ -123,6 +153,11 @@ const MovieCards = ({ movies, condition, onEndReached, isLoading }) => {
       onEndReached={handleEndReached}
       onEndReachedThreshold={verticalDirection ? 0.2 : 0.5}
       ListFooterComponent={renderFooter}
+      ListFooterComponentStyle={
+        {justifyContent: 'center',
+        alignItems: 'center',
+        marginHorizontal: width * 0.035,}
+      }
     />
   );
 };

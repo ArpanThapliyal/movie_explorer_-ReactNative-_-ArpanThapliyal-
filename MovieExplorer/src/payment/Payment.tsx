@@ -1,4 +1,4 @@
-import { StyleSheet, SafeAreaView, Alert } from 'react-native';
+import { SafeAreaView, Alert } from 'react-native';
 import React, { useState } from 'react';
 import WebView from 'react-native-webview';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -45,6 +45,7 @@ const Payment = () => {
             "Subscription Error",
             "Your payment was successful, but we couldn't verify your subscription."
           );
+          
         }
       } catch (error) {
         console.error('Error checking subscription status:', error);
@@ -62,6 +63,7 @@ const Payment = () => {
         "Payment Unsuccessful",
         "Your payment was not completed."
       );
+      navigation.replace('MainTabs');
     }
   };
 
@@ -78,5 +80,3 @@ const Payment = () => {
 };
 
 export default Payment;
-
-const styles = StyleSheet.create({});

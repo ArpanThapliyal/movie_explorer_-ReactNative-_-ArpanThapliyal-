@@ -12,12 +12,17 @@ import {
   KeyboardAvoidingView,
   TouchableOpacity,
   Image,
+  Dimensions,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { launchImageLibrary } from 'react-native-image-picker';
+import LinearGradient from 'react-native-linear-gradient';
 import { AddMovieRequest, GetMovieById, UpdateMovieRequest } from '../axiosRequest/axiosRequest';
 import { useSelector } from 'react-redux';
+import { RFValue } from 'react-native-responsive-fontsize';
+
+const { width, height } = Dimensions.get('screen');
 
 const Supervisor = () => {
   const navigation = useNavigation();
@@ -65,7 +70,7 @@ const Supervisor = () => {
           }
         } catch (err) {
           Alert.alert('Error', 'Failed to fetch movie data');
-          console.error('Fetch movie error:', err);
+          // console.error('Fetch movie error:', err);
         } finally {
           setLoading(false);
         }
@@ -86,22 +91,54 @@ const Supervisor = () => {
     }
   };
 
+  const validateMovieData = (data) => {
+    const errors = {};
+    const currentYear = new Date().getFullYear();
+
+    if (!data.title.trim()) errors.title = '* Title is required';
+    if (!data.genre.trim()) errors.genre = '* Genre is required';
+    if (!data.release_year.trim()) {
+      errors.release_year = '* Release Year is required';
+    } else if (!/^\d{4}$/.test(data.release_year)) {
+      errors.release_year = ' * Release Year must be a 4-digit number';
+    } else {
+      const year = parseInt(data.release_year, 10);
+      if (year < 1888 || year > currentYear + 10) {
+        errors.release_year = `* Release Year must be between 1888 and ${currentYear + 10}`;
+      }
+    }
+    if (!data.rating.trim()) {
+      errors.rating = '* Rating is required';
+    } else if (!/^\d+(\.\d+)?$/.test(data.rating)) {
+      errors.rating = '* Rating must be a number';
+    } else {
+      const rating = parseFloat(data.rating);
+      if (rating < 0 || rating > 10) errors.rating = '* Rating must be between 0 and 10';
+    }
+    if (!data.director.trim()) errors.director = '* Director is required';
+    if (!data.duration.trim()) {
+      errors.duration = '* Duration is required';
+    } else if (!/^\d+$/.test(data.release_year)) {
+      errors.duration = '* Duration must be a positive integer';
+    } else {
+      const duration = parseInt(data.duration, 10);
+      if (duration <= 0) errors.duration = '* Duration must be greater than 0';
+    }
+    if (!data.description.trim()) errors.description = '* Description is required';
+    return errors;
+  };
+
   const handleSubmit = async () => {
-    const required = [
-      'title',
-      'genre',
-      'release_year',
-      'rating',
-      'director',
-      'duration',
-      'description',
-    ];
-    const missing = required.filter(f => !movieData[f]);
-    if (missing.length || (!isEditing && (!poster || !banner))) {
-      Alert.alert(
-        'Missing fields',
-        [...missing, !poster && 'poster', !banner && 'banner'].filter(Boolean).join(', '),
-      );
+    const errors = validateMovieData(movieData);
+    const errorMessages = Object.values(errors);
+
+    // if (!isEditing) {
+    //   if (!poster) errorMessages.push('* Poster image is required');
+    //   if (!banner) errorMessages.push('* Banner image is required');
+    // }
+
+    if (errorMessages.length > 0) {
+      Alert.alert(`Validation Error`, errorMessages.join(`\n\n`));
       return;
     }
 
@@ -140,12 +177,12 @@ const Supervisor = () => {
       if (isEditing) {
         await UpdateMovieRequest(movieId, form, token);
         Alert.alert('Success', 'Movie updated successfully', [
-          { text: 'OK', onPress: () => navigation.goBack() },
+          { text: 'OK', onPress: () => navigation.replace('MainTabs') },
         ]);
       } else {
         await AddMovieRequest(form, token);
         Alert.alert('Success', 'Movie added successfully', [
-          { text: 'OK', onPress: () => navigation.goBack() },
+          { text: 'OK', onPress: () => navigation.replace('MainTabs') },
         ]);
       }
     } catch (err) {
@@ -159,12 +196,16 @@ const Supervisor = () => {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0A0A1A" />
-      <View style={styles.header}>
+      style={styles.container}
+    >
+      <StatusBar barStyle="light-content" backgroundColor="#121212" />
+      <LinearGradient
+        colors={['rgba(0,123,255,0.3)', 'rgba(18,18,18,0.9)', '#121212']}
+        style={styles.header}
+      >
         <Text style={styles.headerTitle}>{isEditing ? 'Edit Movie' : 'Add New Movie'}</Text>
-      </View>
-      <ScrollView style={styles.form}>
+      </LinearGradient>
+      <ScrollView style={styles.form} keyboardShouldPersistTaps="handled">
         {Object.entries({
           Title: 'title',
           Genre: 'genre',
@@ -175,45 +216,64 @@ const Supervisor = () => {
           Description: 'description',
         }).map(([label, field]) => (
           <View key={field} style={styles.group}>
-            <Text style={styles.label}>{label}</Text>
-            <TextInput
-              style={[styles.input, field === 'description' && styles.textArea]}
-              placeholder={label}
-              placeholderTextColor="#8B8B9E"
-              value={String(movieData[field])}
-              onChangeText={t => handleInputChange(field, t)}
-              keyboardType={
-                ['release_year', 'rating', 'duration'].includes(field)
-                  ? 'numeric'
-                  : 'default'
-              }
-              multiline={field === 'description'}
-              numberOfLines={field === 'description' ? 4 : 1}
-            />
+            <Text style={styles.label}>{label} *</Text>
+            <LinearGradient
+              colors={['rgba(0,123,255,0.1)', 'rgba(25,25,25,0.9)']}
+              style={styles.inputContainer}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <TextInput
+                style={[styles.input, field === 'description' && styles.textArea]}
+                placeholder={label}
+                placeholderTextColor="#9CA3AF"
+                value={String(movieData[field])}
+                onChangeText={(t) => handleInputChange(field, t)}
+                keyboardType={
+                  ['release_year', 'rating', 'duration'].includes(field)
+                    ? 'numeric'
+                    : 'default'
+                }
+                multiline={field === 'description'}
+                numberOfLines={field === 'description' ? 4 : 1}
+              />
+            </LinearGradient>
           </View>
         ))}
 
         <View style={styles.group}>
           <Text style={styles.label}>Premium</Text>
-          <View style={styles.pickerContainer}>
+          <LinearGradient
+            colors={['rgba(0,123,255,0.1)', 'rgba(25,25,25,0.9)']}
+            style={styles.pickerContainer}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
             <Picker
               selectedValue={movieData.premium}
-              onValueChange={v => handleInputChange('premium', v)}
-              dropdownIconColor="#FFF">
-              <Picker.Item label="False" value={false} />
-              <Picker.Item label="True" value={true} />
+              onValueChange={(v) => handleInputChange('premium', v)}
+              style={styles.picker}
+              dropdownIconColor="#9CA3AF"
+            >
+              <Picker.Item label="No" value={false} />
+              <Picker.Item label="Yes" value={true} />
             </Picker>
-          </View>
+          </LinearGradient>
         </View>
 
         <View style={styles.group}>
           <Text style={styles.label}>Poster Image</Text>
-          <TouchableOpacity
-            style={styles.imagePicker}
-            onPress={() => pickImage('poster')}>
-            <Text style={styles.imagePickerText}>
-              {poster ? poster.fileName : 'Choose Poster'}
-            </Text>
+          <TouchableOpacity style={styles.imagePicker} onPress={() => pickImage('poster')}>
+            <LinearGradient
+              colors={['#007BFF', '#0056b3']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.gradientButton}
+            >
+              <Text style={styles.imagePickerText}>
+                {poster ? poster.fileName : 'Choose Poster'}
+              </Text>
+            </LinearGradient>
           </TouchableOpacity>
           {(poster || (isEditing && existingPosterUrl)) && (
             <Image
@@ -225,12 +285,17 @@ const Supervisor = () => {
 
         <View style={styles.group}>
           <Text style={styles.label}>Banner Image</Text>
-          <TouchableOpacity
-            style={styles.imagePicker}
-            onPress={() => pickImage('banner')}>
-            <Text style={styles.imagePickerText}>
-              {banner ? banner.fileName : 'Choose Banner'}
-            </Text>
+          <TouchableOpacity style={styles.imagePicker} onPress={() => pickImage('banner')}>
+            <LinearGradient
+              colors={['#007BFF', '#0056b3']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.gradientButton}
+            >
+              <Text style={styles.imagePickerText}>
+                {banner ? banner.fileName : 'Choose Banner'}
+              </Text>
+            </LinearGradient>
           </TouchableOpacity>
           {(banner || (isEditing && existingBannerUrl)) && (
             <Image
@@ -240,15 +305,21 @@ const Supervisor = () => {
           )}
         </View>
 
-        <TouchableOpacity
-          style={styles.submit}
-          onPress={handleSubmit}
-          disabled={loading}>
-          {loading ? (
-            <ActivityIndicator color="#000" />
-          ) : (
-            <Text style={styles.submitText}>{isEditing ? 'Update Movie' : 'Add Movie'}</Text>
-          )}
+        <TouchableOpacity style={styles.submit} onPress={handleSubmit} disabled={loading}>
+          <LinearGradient
+            colors={['#007BFF', '#0056b3']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.submitGradient}
+          >
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.submitText}>
+                {isEditing ? 'Update Movie' : 'Add Movie'}
+              </Text>
+            )}
+          </LinearGradient>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -256,53 +327,94 @@ const Supervisor = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0A0A1A' },
+  container: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
   header: {
-    paddingTop: Platform.OS === 'ios' ? 50 : 20,
-    paddingBottom: 20,
-    backgroundColor: '#0A0A1A',
-    borderBottomWidth: 2,
-    borderBottomColor: '#FFDD00',
+    paddingTop: Platform.OS === 'ios' ? height * 0.06 : height * 0.03,
+    paddingBottom: height * 0.03,
     alignItems: 'center',
   },
-  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#FFDD00' },
-  form: { padding: 16 },
-  group: { marginBottom: 16 },
-  label: { color: '#FFF', fontSize: 16, marginBottom: 8, fontWeight: '600' },
-  input: {
-    backgroundColor: '#1C1C3E',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#3E3E70',
-    padding: 12,
-    color: '#FFF',
-    fontSize: 16,
+  headerTitle: {
+    fontSize: RFValue(24),
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
-  textArea: { height: 100, textAlignVertical: 'top' },
-  pickerContainer: {
-    backgroundColor: '#1C1C3E',
+  form: {
+    padding: width * 0.04,
+  },
+  group: {
+    marginBottom: height * 0.02,
+  },
+  label: {
+    color: '#FFFFFF',
+    fontSize: RFValue(14),
+    marginBottom: height * 0.01,
+    fontWeight: '600',
+  },
+  inputContainer: {
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#3E3E70',
+    borderWidth: 0.4,
+    borderColor: '#9CA3AF',
+    backgroundColor: '#323539',
+  },
+  input: {
+    color: '#FFFFFF',
+    fontSize: RFValue(14),
+    paddingHorizontal: width * 0.04,
+    height: height * 0.061,
+  },
+  textArea: {
+    height: height * 0.15,
+    textAlignVertical: 'top',
+    paddingVertical: height * 0.015,
+  },
+  pickerContainer: {
+    borderRadius: 8,
+    borderWidth: 0.4,
+    borderColor: '#9CA3AF',
+    backgroundColor: '#323539',
     overflow: 'hidden',
   },
+  picker: {
+    color: '#FFFFFF',
+    height: height * 0.065,
+  },
   imagePicker: {
-    backgroundColor: '#FFDD00',
-    padding: 12,
     borderRadius: 8,
+    overflow: 'hidden',
+  },
+  gradientButton: {
+    paddingVertical: height * 0.018,
     alignItems: 'center',
   },
-  imagePickerText: { color: '#000', fontWeight: 'bold' },
-  preview: { width: '100%', height: 200, borderRadius: 8, marginTop: 8 },
+  imagePickerText: {
+    color: '#FFFFFF',
+    fontSize: RFValue(14),
+    fontWeight: 'bold',
+  },
+  preview: {
+    width: width * 0.88,
+    height: height * 0.25,
+    borderRadius: 8,
+    marginTop: height * 0.01,
+  },
   submit: {
-    backgroundColor: '#FFDD00',
-    borderRadius: 10,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 40,
+    borderRadius: 8,
+    marginTop: height * 0.035,
+    marginBottom: height * 0.1,
+    overflow: 'hidden',
   },
-  submitText: { fontSize: 18, fontWeight: 'bold', color: '#000' },
+  submitGradient: {
+    paddingVertical: height * 0.018,
+    alignItems: 'center',
+  },
+  submitText: {
+    fontSize: RFValue(16),
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
 });
 
 export default Supervisor;

@@ -6,6 +6,8 @@ import Home from '../screen/Dashboard';
 import Search from '../screen/Search';
 import PaymentPlans from '../screen/PaymentPlans';
 import Profile from '../screen/Profile';
+import Supervisor from '../screen/Supervisor';
+import { useSelector } from 'react-redux';
 
 const { width } = Dimensions.get('screen');
 const ICON_SIZE = width * 0.06;
@@ -13,6 +15,9 @@ const ICON_SIZE = width * 0.06;
 const Tab = createBottomTabNavigator();
 
 export default function TabNavigation() {
+
+  const role = useSelector(state => state.user.role );
+
   return (
     <Tab.Navigator
       initialRouteName="Home"
@@ -25,9 +30,9 @@ export default function TabNavigation() {
           marginHorizontal: 14,
           position: 'absolute',
           borderWidth:0.6,
-          borderColor:'skyblue',
+          borderColor:'#007BFF',
         },
-        tabBarActiveTintColor: 'skyblue',
+        tabBarActiveTintColor: '#007BFF',
         tabBarInactiveTintColor: '#FFFFFF',
       }}
     >
@@ -59,19 +64,32 @@ export default function TabNavigation() {
         }}
       />
 
-      <Tab.Screen
+      {role !== "supervisor" && <Tab.Screen
         name="Plans"
         component={PaymentPlans}
         options={{
           tabBarIcon: ({ color }) => (
             <Image
-              source={require('../assets/footer/downloads.png')}
+              source={require('../assets/footer/plans.png')}
               style={{ width: ICON_SIZE, height: ICON_SIZE, tintColor: color }}
               resizeMode="contain"
             />
           ),
         }}
-      />
+      />}
+      {role === "supervisor" && <Tab.Screen
+        name="Add Movie"
+        component={Supervisor}
+        options={{
+          tabBarIcon: ({ color }) => (
+            <Image
+              source={require('../assets/footer/addMovie.png')}
+              style={{ width: ICON_SIZE, height: ICON_SIZE, tintColor: color }}
+              resizeMode="contain"
+            />
+          ),
+        }}
+      />}
 
       <Tab.Screen
         name="Profile"

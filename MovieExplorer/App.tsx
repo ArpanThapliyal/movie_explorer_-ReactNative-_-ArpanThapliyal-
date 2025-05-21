@@ -10,7 +10,6 @@ import notifee from '@notifee/react-native';
 
 
 const InnerApp = () => {
-  // Pull the JWT from Redux
   const userToken = useSelector((state: any) => state.user.token);
 
   useEffect(() => {
@@ -30,7 +29,7 @@ const InnerApp = () => {
       }
     } else {
       // Android ≤12: auto-granted
-      Alert.alert('Notifications already allowed on Android ≤12');
+      Alert.alert('Notifications already allowed on your device!');
       registerToken();
     }
   };
@@ -53,8 +52,7 @@ const InnerApp = () => {
   useEffect(() => {
     const unsubscribe = messaging().onMessage(async remoteMessage => {
       const res = await onDisplayNotification(remoteMessage);
-      Alert.alert("device token status: ",JSON.stringify(remoteMessage));
-      console.log("device token status: ",res);
+      // console.log("device token status: ",res);
     });
     return unsubscribe;
   }, []);
@@ -70,7 +68,7 @@ const InnerApp = () => {
       body: remoteMessage.notification?.body,
       android: {
         channelId,
-        smallIcon: 'ic_stat_my_icon', // your icon name
+        // smallIcon: 'ic_stat_my_icon', 
         pressAction: {
           id: 'default',
         },

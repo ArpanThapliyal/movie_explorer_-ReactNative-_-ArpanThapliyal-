@@ -5,19 +5,22 @@ const UserSlice = createSlice({
     initialState: {
       role: null,
       email: null,
-      token: null
-      // loading: false
+      token: null,
+      // name: null,
+      
     },
     reducers: {
       setUser: (state, action) => {
         state.role = action.payload.role;
         state.email = action.payload.email;
         state.token = action.payload.token;
+        // state.name = action.payload.name;
       },
       clearUser: state => {  //  for logout
         state.role = null;
         state.email = null;
         state.token = null;
+        // state.name = null;
       }
     }
   });

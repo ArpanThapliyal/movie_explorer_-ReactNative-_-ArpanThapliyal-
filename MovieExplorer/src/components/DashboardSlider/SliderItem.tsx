@@ -63,7 +63,4 @@ const styles = StyleSheet.create({
     borderWidth:0.5,
     borderColor:'white',
   },
-  textColor: {
-    color: 'skyblue',
-  },
 });

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,20 +10,21 @@ import {
   Platform,
   Image,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import debounce from 'lodash.debounce';
-import { GetAllMovies } from '../axiosRequest/axiosRequest';
+import { GetAllMoviesByTitle } from '../axiosRequest/axiosRequest';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { setId } from '../redux/slice/MovieSlice';
+import { RFValue } from 'react-native-responsive-fontsize';
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get('screen');
 
 const SearchScreen = () => {
   const [query, setQuery] = useState('');
-  const [allMovies, setAllMovies] = useState([]);
   const [filtered, setFiltered] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   
   const navigation = useNavigation();
@@ -31,61 +32,65 @@ const SearchScreen = () => {
   
   // Get user role from Redux store
   const userRole = useSelector(state => state.user.role);
+  const plan_type = useSelector(state => state.subscription.plan_type);
   const isSupervisor = userRole === 'supervisor';
 
-  // fetching all movies
-  const fetchMovies = async () => {
-    try {
-      const data = await GetAllMovies();
-      setAllMovies(data);
-      // No longer setting filtered to data initially
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchMovies();
-  }, []);
-
-  // debounced filter
+  // Debounced filter function to fetch movies by title
   const doFilter = useCallback(
-    debounce(text => {
+    debounce(async (text) => {
       if (text.trim() === '') {
-        // If search is empty, don't show any results
         setFiltered([]);
         setHasSearched(false);
+        setIsSearching(false);
         return;
       }
-      
-      const lower = text.toLowerCase();
-      const results = allMovies.filter(item =>
-        item.title.toLowerCase().includes(lower)
-      );
-      setFiltered(results);
-      setHasSearched(true);
-    }, 400),
-    [allMovies]
+      setIsSearching(true);
+      try {
+        const data = await GetAllMoviesByTitle(text);
+        if (data) {
+          const filteredData = data
+            .filter(item => item.title.toLowerCase().startsWith(text.toLowerCase()))
+            .slice(0, 5); 
+          setFiltered(filteredData);
+        } else {
+          setFiltered([]);
+        }
+        setHasSearched(true);
+      } catch (e) {
+        console.error('Search error:', e);
+        setFiltered([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 600),
+    []
   );
 
-  const handleSearch = text => {
+  const handleSearch = (text) => {
     setQuery(text);
     doFilter(text);
   };
 
-  const handleMoviePress = (movieId) => {
-    // Update Redux store with selected movie ID
-    dispatch(setId(movieId));
-    // Navigate to movie detail screen
-    navigation.navigate('MovieDetail');
+  const handleMoviePress = (movieId, prem) => {
+    if (!prem || plan_type === 'premium') {
+      dispatch(setId(movieId));
+      navigation.navigate('MovieDetail');
+    } else {
+      Alert.alert(
+        "Please buy a subscription",
+        "to Access this Premium Movie",
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'OK', onPress: () => navigation.navigate('Plans') }
+        ],
+        { cancelable: false }
+      );
+    }
   };
 
-  // Function to handle edit click
   const handleEditClick = (movieId) => {
     dispatch(setId(movieId));
-    navigation.navigate('EditMovie');
+    navigation.navigate('Supervisor', { movieId, isEditing: true });
   };
 
   const renderItem = ({ item }) => (
@@ -93,7 +98,7 @@ const SearchScreen = () => {
       <TouchableOpacity 
         style={styles.card} 
         activeOpacity={0.8}
-        onPress={() => handleMoviePress(item.id)}
+        onPress={() => handleMoviePress(item.id, item.premium)}
       >
         <Image source={{ uri: item.poster_url }} style={styles.poster} />
         <View style={styles.info}>
@@ -102,7 +107,6 @@ const SearchScreen = () => {
         </View>
       </TouchableOpacity>
       
-      {/* Edit Icon - Only visible for supervisors */}
       {isSupervisor && (
         <TouchableOpacity
           style={styles.editIconContainer}
@@ -121,7 +125,13 @@ const SearchScreen = () => {
   );
 
   const renderEmptyComponent = () => {
-    if (hasSearched && filtered.length === 0) {
+    if (isSearching) {
+      return (
+        <View style={styles.emptyContainer}>
+          <ActivityIndicator size="large" color="#007BFF" />
+        </View>
+      );
+    } else if (hasSearched && filtered.length === 0) {
       return (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No movies found</Text>
@@ -141,14 +151,6 @@ const SearchScreen = () => {
     }
     return null;
   };
-
-  if (loading) {
-    return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#E50914" />
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
@@ -188,57 +190,52 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#121212',
-    paddingTop: Platform.OS === 'android' ? 25 : 0,
-  },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    backgroundColor: '#121212',
+    paddingTop: Platform.OS === 'android' ? height * 0.03 : 0,
   },
   header: {
-    paddingVertical: 20,
+    paddingVertical: height * 0.025,
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#282828',
   },
   headerText: {
-    fontSize: 30,
+    fontSize: RFValue(29),
     fontWeight: 'bold',
     color: '#FFF',
   },
   searchWrapper: {
     flexDirection: 'row',
     backgroundColor: '#282828',
-    margin: 16,
-    borderRadius: 30,
+    margin: width * 0.04,
+    borderRadius: width * 0.08,
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: width * 0.04,
   },
   icon: {
-    width: 24,
-    height: 24,
-    tintColor: '#E50914',
-    marginRight: 12,
+    width: width * 0.06,
+    height: width * 0.06,
+    tintColor: '#007BFF',
+    marginRight: width * 0.03,
   },
   searchInput: {
     flex: 1,
-    height: 50,
-    fontSize: 18,
+    height: height * 0.06,
+    fontSize: RFValue(18),
     color: '#FFF',
   },
   list: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: width * 0.04,
+    paddingBottom: width * 0.04,
     flexGrow: 1,
   },
   cardWrapper: {
     position: 'relative',
-    marginBottom: 12,
+    marginBottom: height * 0.015,
   },
   card: {
     flexDirection: 'row',
     backgroundColor: '#1F1F1F',
-    borderRadius: 12,
+    borderRadius: width * 0.03,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOpacity: 0.4,
@@ -247,50 +244,50 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   poster: {
-    width: 70,
-    height: 105,
+    width: width * 0.17,
+    height: height * 0.13,
   },
   info: {
     flex: 1,
-    padding: 12,
+    padding: width * 0.03,
     justifyContent: 'center',
   },
   title: {
-    fontSize: 18,
+    fontSize: RFValue(18),
     fontWeight: '600',
     color: '#FFF',
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: RFValue(14),
     color: '#AAA',
-    marginTop: 4,
+    marginTop: height * 0.005,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 100,
+    paddingTop: height * 0.12,
   },
   emptyText: {
-    fontSize: 18,
+    fontSize: RFValue(18),
     color: '#777',
-    marginTop: 16,
+    marginTop: height * 0.02,
   },
   emptyIcon: {
-    width: 80,
-    height: 80,
+    width: width * 0.2,
+    height: width * 0.2,
     tintColor: '#555',
   },
   editIconContainer: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    top: height * 0.012,
+    right: width * 0.025,
     zIndex: 1,
   },
   editIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: width * 0.09,
+    height: width * 0.09,
+    borderRadius: width * 0.045,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -298,8 +295,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   editIconImage: {
-    width: 20,
-    height: 20,
+    width: width * 0.05,
+    height: width * 0.05,
     tintColor: '#FFF',
   },
 });

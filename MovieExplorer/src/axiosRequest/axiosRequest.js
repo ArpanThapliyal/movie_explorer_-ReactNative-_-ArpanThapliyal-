@@ -16,7 +16,8 @@ export const signUpRequest = async (data) => {
 //sign-in api
 export const LoginRequest = async (data) => {
   return axios.post(
-    'https://movie-explorer-app.onrender.com/users/sign_in',
+    'https://movie-explorer-app.onrender.com/users/sign_in'
+    ,
     data,
     {
       headers: {
@@ -39,10 +40,34 @@ export const LogoutRequest = async (user_token) => {
   );
 };
 
+//get current user
+export const CurrentUser = async (user_token) => {
+  const res = await axios.get(
+    'https://movie-explorer-app.onrender.com/api/v1/current_user',
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization : `Bearer ${user_token}`
+      },
+    }
+  );
+  return res.data;
+};
+
 //all movies api
 export const GetAllMovies = async (page = 1, perPage = 8) => {
   try {
     const res = await axios.get(`https://movie-explorer-app.onrender.com/api/v1/movies?page=${page}&per_page=${perPage}`);
+    return res.data.movies;
+  } catch (err) {
+    console.log("some error occurred", err);
+    return null;
+  }
+};
+//all movies api using title
+export const GetAllMoviesByTitle = async (title) => {
+  try {
+    const res = await axios.get(`https://movie-explorer-app.onrender.com/api/v1/movies?title=${title}`);
     return res.data.movies;
   } catch (err) {
     console.log("some error occurred", err);
@@ -154,8 +179,6 @@ export const addDeviceNotification = async (device_token, user_token) => {
   }
 };
 
-
-
 // enabling and disabling notifications
 export const enableNotification = async (user_token) => {
   try {
@@ -243,5 +266,3 @@ export const createSubscription = async (planType,token) => {
     throw new Error(error.message || 'Failed to initiate subscription');
   }
 };
-
-

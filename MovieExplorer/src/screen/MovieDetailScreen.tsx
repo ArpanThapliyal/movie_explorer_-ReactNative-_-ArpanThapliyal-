@@ -10,13 +10,13 @@ import {
   Dimensions,
   StatusBar,
   Platform,
+  ScrollView,
 } from 'react-native';
 import {RFValue} from 'react-native-responsive-fontsize';
 import LinearGradient from 'react-native-linear-gradient';
 
 // PNG icons
 import backIcon from '../assets/MovieDetailScreen/back.png';
-import favoriteIcon from '../assets/MovieDetailScreen/heart.png';
 import playIcon from '../assets/MovieDetailScreen/play.png';
 
 import {useSelector} from 'react-redux';
@@ -27,6 +27,7 @@ const {width} = Dimensions.get('screen');
 
 export default function MovieDetailScreen() {
   const [singleMovie, setSingleMovie] = useState({});
+  const [showFullDescription, setShowFullDescription] = useState(false);
   const movieId = useSelector(state => state.movie.id);
   const user_token = useSelector(state => state.user.token)
 
@@ -46,7 +47,7 @@ export default function MovieDetailScreen() {
   const defaultDuration = 'Time';
   const defaultGenre = 'Genre';
   const defaultDescription =
-    'please be patient movie will load shortly...';
+    'please buy the premium subscription';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -62,9 +63,7 @@ export default function MovieDetailScreen() {
               onPress={() => navigation.goBack()}>
               <Image source={backIcon} style={styles.backIcon} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.heartButton}>
-              <Image source={favoriteIcon} style={styles.heartIcon} />
-            </TouchableOpacity>
+          
           </View>
 
           <View style={styles.contentAreaContainer}>
@@ -82,9 +81,9 @@ export default function MovieDetailScreen() {
                     style={styles.thumbnail}
                     resizeMode="cover"
                   />
-                  <TouchableOpacity style={styles.playButton}>
+                  {/* <TouchableOpacity style={styles.playButton}>
                     <Image source={playIcon} style={styles.playIcon} />
-                  </TouchableOpacity>
+                  </TouchableOpacity> */}
                 </View>
                 <View style={styles.detailsContainer}>
                   <Text style={styles.movieTitle} numberOfLines={2}>
@@ -111,15 +110,15 @@ export default function MovieDetailScreen() {
 
               <View style={styles.overviewSection}>
                 <Text style={styles.overviewTitle}>Overview</Text>
-                <Text
-                  style={styles.overviewContent}
-                  numberOfLines={4}
-                  ellipsizeMode="tail">
-                  {singleMovie.description || defaultDescription}
-                </Text>
-                <TouchableOpacity>
-                  <Text style={styles.readMoreText}>Read More</Text>
-                </TouchableOpacity>
+                <View style={styles.overviewContentContainer}>
+                  
+                    <ScrollView showsVerticalScrollIndicator={false}>
+                      <Text style={styles.overviewContent}>
+                        {singleMovie.description || defaultDescription}
+                      </Text>
+                    </ScrollView>
+                  
+                </View>
               </View>
             </View>
           </View>
@@ -151,18 +150,10 @@ const styles = StyleSheet.create({
   backButton: {
     padding: RFValue(8),
   },
-  heartButton: {
-    padding: RFValue(8),
-  },
   backIcon: {
     width: RFValue(28),
     height: RFValue(28),
     tintColor: '#fff',
-  },
-  heartIcon: {
-    width: RFValue(26),
-    height: RFValue(26),
-    tintColor: '#FF5E94',
   },
   contentAreaContainer: {
     position: 'absolute',
@@ -200,26 +191,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'white',
   },
-  playButton: {
-    bottom: RFValue(28),
-    left: (width * 0.32) / 2 - RFValue(20),
-    width: RFValue(54),
-    height: RFValue(54),
-    borderRadius: RFValue(30),
-    backgroundColor: '#FF3E7A',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.3,
-    shadowRadius: RFValue(4),
-    elevation: 5,
-  },
-  playIcon: {
-    width: RFValue(22),
-    height: RFValue(22),
-    tintColor: '#fff',
-  },
+  // playButton: {
+  //   bottom: RFValue(28),
+  //   left: (width * 0.32) / 2 - RFValue(20),
+  //   width: RFValue(54),
+  //   height: RFValue(54),
+  //   borderRadius: RFValue(30),
+  //   backgroundColor: '#FF3E7A',
+  //   alignItems: 'center',
+  //   justifyContent: 'center',
+  //   shadowColor: '#000',
+  //   shadowOffset: {width: 0, height: 2},
+  //   shadowOpacity: 0.3,
+  //   shadowRadius: RFValue(4),
+  //   elevation: 5,
+  // },
+  // playIcon: {
+  //   width: RFValue(22),
+  //   height: RFValue(22),
+  //   tintColor: '#fff',
+  // },
   detailsContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -264,7 +255,7 @@ const styles = StyleSheet.create({
   },
   overviewSection: {
     paddingHorizontal: RFValue(20),
-    marginTop: RFValue(4),
+    marginTop: RFValue(8),
   },
   overviewTitle: {
     color: '#FFFFFF',
@@ -272,15 +263,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: RFValue(12),
   },
+  overviewContentContainer: {
+    height: RFValue(140), 
+    
+  },
   overviewContent: {
     color: '#9DA0B8',
     fontSize: RFValue(14),
     lineHeight: RFValue(20),
-  },
-  readMoreText: {
-    color: '#FFFFFF',
-    fontSize: RFValue(13),
-    fontWeight: '500',
-    marginTop: RFValue(8),
+    
   },
 });
