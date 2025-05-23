@@ -68,7 +68,7 @@ const InnerApp = () => {
       body: remoteMessage.notification?.body,
       android: {
         channelId,
-        // smallIcon: 'ic_stat_my_icon', 
+        smallIcon: 'ic_launcher_round', 
         pressAction: {
           id: 'default',
         },

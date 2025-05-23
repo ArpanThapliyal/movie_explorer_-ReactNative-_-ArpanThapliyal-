@@ -151,7 +151,7 @@ const MovieCards = ({ movies, condition, onEndReached, isLoading }) => {
       showsVerticalScrollIndicator={false}
       scrollEnabled={!verticalDirection}
       onEndReached={handleEndReached}
-      onEndReachedThreshold={verticalDirection ? 0.2 : 0.5}
+      onEndReachedThreshold={verticalDirection ? 0.5 : 0.6}
       ListFooterComponent={renderFooter}
       ListFooterComponentStyle={
         {justifyContent: 'center',

@@ -263,5 +263,6 @@ const styles = StyleSheet.create({
   footerLink: {
     color: '#007BFF',
     fontWeight: 'bold',
+    fontSize: RFValue(14),
   },
 });

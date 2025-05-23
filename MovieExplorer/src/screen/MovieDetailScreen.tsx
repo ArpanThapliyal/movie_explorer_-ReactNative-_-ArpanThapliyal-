@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     marginBottom: RFValue(12),
   },
   overviewContentContainer: {
-    height: RFValue(140), 
+    height: RFValue(130), 
     
   },
   overviewContent: {
